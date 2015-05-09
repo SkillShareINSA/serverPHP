@@ -1,13 +1,13 @@
 <?php
-	include('Crypt/Crypt/AES.php');
+	$algo = MCRYPT_RIJNDAEL_128;
+	$key = "ma clef de crypt";
+	$mode = MCRYPT_MODE_CBC;
 
-	$clef = "abcdefghijklmnop";
+	$keyHash = md5($key);
+	$key = substr($keyHash, 0, mcrypt_get_key_size($algo, $mode));
+    $iv  = substr($keyHash, 0, mcrypt_get_block_size($algo, $mode));
 
-	$cipher = new Crypt_AES(CRYPT_AES_MODE_OFB);
-	$cipher->setKey($clef);
+	$message = "Ho yeah bien ouèj !";
 
-	$texte_clair = "texte_clair";
-	echo $texte_clair;
-	echo $cipher->encrypt($texte_clair);
-	echo $cipher->decrypt($cipher->encrypt($texte_clair));
-?>
+	?>
+<?php echo(base64_encode(mcrypt_encrypt($algo,$key,$message,$mode,$iv))); ?>
