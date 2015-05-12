@@ -26,9 +26,9 @@
 	/* Formate un message avec un mot de passe aléatoire suivi d'un salt et
 	 * de l'identifiant utilisateur
 	*/ 
-	function message_creator($name_user,$password) {
+	function message_creator($login,$password) {
 		$salt = "£Cf1Asv( %";
-		return $password.$salt.$name_user;
+		return $password.$salt.$login;
 	}
 	
 	try {
@@ -56,22 +56,22 @@
 	}
 
 
-	$name_user = phpCAS::getUser();
+	$login = phpCAS::getUser();
 	$password = password_generator();
 
-	$exist = $bdd->prepare('SELECT COUNT(*) AS count FROM users WHERE name_user = ?');
-	$exist->execute(array($name_user));
+	$exist = $bdd->prepare('SELECT COUNT(*) AS count FROM users WHERE login = ?');
+	$exist->execute(array($login));
 			
 	$exist = $exist->fetch()['count'];
 
 	if ($exist != 0) {
-		$query = $bdd->prepare('UPDATE users SET connected = 1, password = ? WHERE name_user = ?');
-		$query->execute(array($password,$name_user));
+		$query = $bdd->prepare('UPDATE users SET password = ? WHERE login = ?');
+		$query->execute(array($password,$login));
 	}
 	else {
-		$query = $bdd->prepare('INSERT INTO users (name_user, password, connected) VALUES (?, ?, 1)'); 
-		$query->execute(array($name_user,$password));
+		$query = $bdd->prepare('INSERT INTO users (login, password) VALUES (?, ?)'); 
+		$query->execute(array($login,$password));
 	}
-
-	header('Location: http://localhost:3000/postConnect?user='.cryptor(message_creator($name_user,$password)));
+	//echo('Location: http://localhost:3000/claimConnection/'.cryptor(message_creator($login,$password)));
+	header('Location: http://localhost:3000/claimConnection?input='.cryptor(message_creator($login,$password)));
 ?>

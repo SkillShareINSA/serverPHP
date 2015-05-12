@@ -10,24 +10,38 @@
 		}
 	}
 
-if (isset($_GET['is_connected']) && sizeof( $_GET['is_connected']) != null) {
-		$name_user = $_GET['is_connected'];
+if (isset($_GET['login']) && sizeof( $_GET['login']) != null) {
+	$login = $_GET['login'];
+		if (isset($_GET['password']) && sizeof( $_GET['password']) != null && $_GET['password'] != '') {
+			$password = $_GET['password'];
 
-		$users = $bdd->prepare('SELECT * FROM users WHERE name_user = ?');
-		$users->execute(array($name_user));
-		
-		$user = NULL;
-		$user = $users->fetch();
+			$query = $bdd->prepare('SELECT * FROM users WHERE login = ?');
+			$query->execute(array($login));
+			
+			$user = NULL;
+			$user = $query->fetch();
 
-		if ($user == NULL) {
-			echo('0');
+			if ($user == NULL) {
+				echo('0');
+			}
+			else {
+				if ($user['password'] == $password)
+					echo('1');
+				else 
+					echo('0');
+				
+
+				$query = $bdd->prepare('UPDATE users SET password = \'\' WHERE login = ?');
+				$query->execute(array($login));
+			}
 		}
 		else {
-			if ($user['connected'] == 1)
-				echo('1');
-			else 
-				echo('0');
+			$query = $bdd->prepare('UPDATE users SET password = \'\' WHERE login = ?');
+			$query->execute(array($login));
+
+			echo('0');
 		}
+		
 	}
 
 ?>
