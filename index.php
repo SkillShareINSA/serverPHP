@@ -48,30 +48,50 @@
 
 	phpCAS::client(CAS_VERSION_2_0, $cas_host, $cas_port, $cas_context);
 
+	/*Vérifie le certificat. A decommenter et commenter la ligne du dessous
+	pour le deployment*/
+	//phpCAS::setCasServerCACert($cas_server_ca_cert_path);
+	/*Ne verifie pas le certificat. A  remplacer par la ligne du haut*/
 	phpCAS::setNoCasServerValidation();
-	phpCAS::forceAuthentication();
-
+	
+	try {
+    	phpCAS::forceAuthentication();
+    /* si l'utilisateur met trop de temps à cliquer sur >ici sur la page
+     cas.insa-toulouse une exception est reçue depuis forceAuthentication.
+     on déconnecte l'utilisateur du server CAS
+     */
+	} catch (Exception $e) {
+		phpCAS::logoutWithRedirectService('http://localhost:3000/claimConnection?input='.cryptor(message_creator('',password_generator())));
+	}
+	
+	/*Deconnexion de l'utilisateur du serveur CAS et redirection vers Meteor*/
 	if (isset($_REQUEST['logout'])) {
-		phpCAS::logout();
+		phpCAS::logoutWithRedirectService('http://localhost:3000/');
 	}
 
 
 	$login = phpCAS::getUser();
 	$password = password_generator();
 
+	/* compter le nombre d'utilisateur $login dans la base de donnée */
 	$exist = $bdd->prepare('SELECT COUNT(*) AS count FROM users WHERE login = ?');
 	$exist->execute(array($login));
 			
 	$exist = $exist->fetch()['count'];
 
+	/* si l'utilisateur $login n'existe pas */
 	if ($exist != 0) {
+		/* on l'insère dans la base de donnée avec un mot de passe aléatoire
+		 que l'on vient de générer*/
 		$query = $bdd->prepare('UPDATE users SET password = ? WHERE login = ?');
 		$query->execute(array($password,$login));
 	}
+	/* si l'utilisateur existe */
 	else {
+		/* on regénère un mot de passe aléatoire */
 		$query = $bdd->prepare('INSERT INTO users (login, password) VALUES (?, ?)'); 
 		$query->execute(array($login,$password));
 	}
-	//echo('Location: http://localhost:3000/claimConnection/'.cryptor(message_creator($login,$password)));
+	/*redirection avec avec les paramètres pour Meteor cryptés */
 	header('Location: http://localhost:3000/claimConnection?input='.cryptor(message_creator($login,$password)));
 ?>
