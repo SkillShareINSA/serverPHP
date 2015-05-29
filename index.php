@@ -44,6 +44,11 @@
 	require_once 'CAS/config.php';
 	require_once 'CAS/CAS.php';
 
+	// get config parameters
+	$config = parse_ini_file('config.ini', true);
+	$meteorServer = $config['METEOR_SERVER'];
+	$meteorServerFullPath = $meteorServer['SERVER_PROTOCOL'] . '://' . $meteorServer['SERVER_ADDR'] . ':' . $meteorServer['SERVER_PORT'];
+
 	phpCAS::setDebug();
 
 	phpCAS::client(CAS_VERSION_2_0, $cas_host, $cas_port, $cas_context);
@@ -57,7 +62,7 @@
 	/*Deconnexion de l'utilisateur du serveur CAS et redirection vers la page de 
 	deconnexion de l'user*/
 	if (isset($_GET['logout'])) {
-		phpCAS::logoutWithRedirectService('http://localhost:3000/logout');
+		phpCAS::logoutWithRedirectService($meteorServerFullPath . '/logout');
 	}
 	else {
 		try {
@@ -68,7 +73,7 @@
 	     */
 		} catch (Exception $e) {
 			phpCAS::logoutWithRedirectService(
-				'http://localhost:3000/claimConnection?input='.
+				$meteorServerFullPath . '/claimConnection?input='.
 				cryptor(message_creator('',password_generator()))
 			);
 		}
@@ -100,7 +105,7 @@
 		}
 		/*redirection avec avec les paramètres pour Meteor cryptés */
 		header(
-			'Location: http://localhost:3000/claimConnection?input='.
+			'Location: ' . $meteorServerFullPath . '/claimConnection?input='.
 			cryptor(message_creator($login,$password))
 		);
 	}
